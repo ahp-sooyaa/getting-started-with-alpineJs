@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body>
+    <div x-data="game()" class="flex h-screen items-center justify-center">
+        <h1 x-show="isWinned" class="fixed font-bold text-center text-2xl">
+            You are winner!
+        </h1>
+        <h1 class="fixed font-bold right-12 text-2xl top-56">
+            <span x-text="points"></span>
+            <span class="text-sm font-normal">pts</span>
+        </h1>
+        <div class="flex-1 grid grid-cols-4 gap-10 mx-10">
+            <template x-for="card in cards">
+                <div>
+                    <button 
+                        x-show="! card.cleared"
+                        @click="flipCard(card)" 
+                        class="w-full h-20 rounded-lg cursor-pointer" 
+                        :disabled="flippedCards.length == 2"
+                        :class="[card.flipped ? card.color : 'bg-gray-500']"
+                    ></button>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div 
+        x-show="show"
+        x-data="{show: false, message: 'default message'}" 
+        @flash.window="
+            show = true; 
+            message = $event.detail.message
+            setTimeout(() => show = false, 1000)
+        "
+        class="bg-green-500 bottom-5 fixed min-w-max px-5 py-3 right-12 rounded-2xl text-green-100"
+    >
+        <span x-text="message"></span>
+    </div>
+
+    <script>
+        function pause(milliseconds = 500) {
+            return new Promise(resolve => setTimeout(resolve, milliseconds))
+        }
+
+        function flashMessage(message) {
+            window.dispatchEvent(new CustomEvent('flash', { detail: {message} }))
+        }
+
+        function game() {
+            return { 
+                cards: [
+                    { color: 'bg-red-500', flipped: false, cleared: false },
+                    { color: 'bg-green-500', flipped: false, cleared: false },
+                    { color: 'bg-yellow-500', flipped: false, cleared: false },
+                    { color: 'bg-indigo-500', flipped: false, cleared: false },
+                    { color: 'bg-red-500', flipped: false, cleared: false },
+                    { color: 'bg-green-500', flipped: false, cleared: false },
+                    { color: 'bg-yellow-500', flipped: false, cleared: false },
+                    { color: 'bg-indigo-500', flipped: false, cleared: false },
+                ],
+                isWinned: false,
+
+                get points() {
+                    return this.cards.filter(card => card.cleared).length
+                },
+
+                get remainingCards() {
+                    return this.cards.filter(card => ! card.cleared).length
+                },
+
+                get flippedCards() {
+                    return this.cards.filter(card => card.flipped)
+                },
+
+                async flipCard(card) {
+                    card.flipped = !card.flipped
+
+                    if(this.isTwoCardsFlipped()) {
+
+                        if (this.hasMatch()) {
+                            await pause()
+
+                            this.flippedCards.forEach(flippedCard => flippedCard.cleared = true)
+
+                            flashMessage("You found match")
+                            if (! this.remainingCards) {
+                                this.isWinned = true
+                            }
+                        }
+
+                        await pause()
+                            
+                        this.flippedCards.forEach(flippedCard => flippedCard.flipped = false)   
+                    }
+                },
+
+                hasMatch() {
+                    return this.flippedCards[0].color == this.flippedCards[1].color
+                },
+
+                isTwoCardsFlipped() {
+                    return this.flippedCards.length == 2
+                }
+            };
+        }
+    </script>
+</body>
+</html>
