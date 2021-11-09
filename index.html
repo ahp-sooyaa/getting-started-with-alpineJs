@@ -52,7 +52,7 @@
             <div x-show="isWinned" class="font-bold text-center text-2xl absolute top-1/2 w-full">
                 You are winner!
             </div>
-            <div class="grid grid-cols-4 gap-y-10">
+            <div class="grid grid-cols-3 lg:grid-cols-4 gap-y-10">
                 <template x-for="card in cards">
                     <!-- <div class="flex justify-center h-32 w-full">
                         <button 
@@ -65,20 +65,20 @@
                     </div> -->
 
                     <div 
-                        class="flip-card flex justify-center h-32 w-full" 
+                        class="flip-card flex justify-center h-20 md:h-24 lg:h-32 w-full" 
                         :class="card.flipped ? 'rotate-y-180' : ''"
                     >
                         <div 
-                            class="flip-card-inner h-full w-32" 
+                            class="flip-card-inner h-full w-20 md:w-24 lg:w-32" 
                             :class="card.flipped ? 'rotate-y-180' : ''"
                         >
                             <div 
                                 x-show="! card.cleared"
                                 @click="flipCard(card)" 
-                                class="backface-visible-hidden absolute bg-white cursor-pointer rounded-lg shadow shadow-xl h-full w-32" 
+                                class="backface-visible-hidden absolute bg-white cursor-pointer rounded-lg shadow shadow-xl h-full w-20 md:w-24 lg:w-32" 
                             ></div>
                             <div 
-                                class="transform rotate-y-180 backface-visible-hidden absolute cursor-pointer h-full w-32 shadow-xl rounded-lg"
+                                class="transform rotate-y-180 backface-visible-hidden absolute cursor-pointer h-full w-20 md:w-24 lg:w-32 shadow-xl rounded-lg"
                                 :class="card.color"
                                 @click="flipCard(card)"
                             ></div>
