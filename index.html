@@ -36,9 +36,15 @@
                 Color Mode
             </div>
 
-            <div class="font-bold text-2xl">
-                <span x-text="points"></span>
-                <span class="text-sm font-normal">pts</span>
+            <div class="flex space-x-5">
+                <div class="font-bold text-2xl">
+                    <span x-text="noOfTurns"></span>
+                    <span class="text-sm font-normal" x-text="noOfTurns > 1 ? 'truns' : 'turn'"></span>
+                </div>
+                <div class="font-bold text-2xl">
+                    <span x-text="points"></span>
+                    <span class="text-sm font-normal">pts</span>
+                </div>
             </div>
         </header>
 
@@ -85,13 +91,15 @@
 
     <div 
         x-show="show"
-        x-data="{show: false, message: 'default message'}" 
+        x-data="{show: false, message: 'default message', status: 'success'}" 
         @flash.window="
-            show = true; 
+            show = true
             message = $event.detail.message
+            status = $event.detail.status
             setTimeout(() => show = false, 500)
         "
-        class="bg-green-500 bottom-5 fixed min-w-max px-5 py-3 right-12 rounded-2xl text-green-100"
+        class="bottom-5 fixed min-w-max px-5 py-3 right-12 rounded-2xl text-green-100"
+        :class="status == 'success' ? 'bg-green-500' : 'bg-red-500'"
     >
         <span x-text="message"></span>
     </div>
@@ -101,8 +109,8 @@
             return new Promise(resolve => setTimeout(resolve, milliseconds))
         }
 
-        function flashMessage(message) {
-            window.dispatchEvent(new CustomEvent('flash', { detail: {message} }))
+        function flashMessage(message, status) {
+            window.dispatchEvent(new CustomEvent('flash', { detail: {message, status} }))
         }
 
         function game() {
@@ -122,6 +130,7 @@
                     { color: 'bg-gradient-to-br from-indigo-500 to-red-500', flipped: false, cleared: false },
                 ].sort(() => Math.random() - .5),
                 isWinned: false,
+                noOfTurns: 0,
 
                 get points() {
                     return this.cards.filter(card => card.cleared).length
@@ -149,8 +158,13 @@
 
                             this.flippedCards.forEach(flippedCard => flippedCard.cleared = true)
 
-                            flashMessage("You found match")
+                            flashMessage("You found match", "success")
+                        } else {
+                            await pause()
+
+                            flashMessage("Oh no you missed")
                         }
+
                         await pause()
                         
                         this.flippedCards.forEach(flippedCard => flippedCard.flipped = false)  
@@ -159,6 +173,8 @@
                             await pause()
                             this.isWinned = true
                         }
+
+                        this.noOfTurns++
                     }
                 },
 
