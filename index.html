@@ -4,31 +4,82 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Memory game with alpineJs</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+
+    <style>
+        .flip-card {
+          perspective: 1000px; /* Remove this if you don't want the 3D effect */
+        }
+
+        .flip-card-inner {
+          position: relative;
+          transition: transform 0.8s;
+          transform-style: preserve-3d;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .backface-visible-hidden {
+          -webkit-backface-visibility: hidden; /* Safari */
+          backface-visibility: hidden;
+        }
+    </style>
 </head>
 <body>
-    <div x-data="game()" class="flex h-screen items-center justify-center">
-        <h1 x-show="isWinned" class="fixed font-bold text-center text-2xl">
-            You are winner!
-        </h1>
-        <h1 class="fixed font-bold right-12 text-2xl top-56">
-            <span x-text="points"></span>
-            <span class="text-sm font-normal">pts</span>
-        </h1>
-        <div class="flex-1 grid grid-cols-4 gap-10 mx-10">
-            <template x-for="card in cards">
-                <div>
-                    <button 
-                        x-show="! card.cleared"
-                        @click="flipCard(card)" 
-                        class="w-full h-20 rounded-lg cursor-pointer" 
-                        :disabled="flippedCards.length == 2"
-                        :class="[card.flipped ? card.color : 'bg-gray-500']"
-                    ></button>
-                </div>
-            </template>
+    <div x-data="game()" class="flex flex-col h-screen items-center justify-center">
+        <header class="flex flex-row mb-10 w-5/6 justify-between">
+            <div class="font-bold text-2xl text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-red-600">
+                Color Mode
+            </div>
+
+            <div class="font-bold text-2xl">
+                <span x-text="points"></span>
+                <span class="text-sm font-normal">pts</span>
+            </div>
+        </header>
+
+        <div class="bg-gray-100 py-10 rounded-2xl shadow w-5/6 relative">
+            <div x-show="isWinned" class="font-bold text-center text-2xl absolute top-1/2 w-full">
+                You are winner!
+            </div>
+            <div class="grid grid-cols-4 gap-y-10">
+                <template x-for="card in cards">
+                    <!-- <div class="flex justify-center h-32 w-full">
+                        <button 
+                            x-show="! card.cleared"
+                            @click="flipCard(card)" 
+                            class="cursor-pointer rounded-lg shadow shadow-xl h-full w-32" 
+                            :disabled="flippedCards.length == 2"
+                            :class="[card.flipped ? card.color : 'bg-white']"
+                        ></button>
+                    </div> -->
+
+                    <div 
+                        class="flip-card flex justify-center h-32 w-full" 
+                        :class="card.flipped ? 'rotate-y-180' : ''"
+                    >
+                        <div 
+                            class="flip-card-inner h-full w-32" 
+                            :class="card.flipped ? 'rotate-y-180' : ''"
+                        >
+                            <div 
+                                x-show="! card.cleared"
+                                @click="flipCard(card)" 
+                                class="backface-visible-hidden absolute bg-white cursor-pointer rounded-lg shadow shadow-xl h-full w-32" 
+                            ></div>
+                            <div 
+                                class="transform rotate-y-180 backface-visible-hidden absolute cursor-pointer h-full w-32 shadow-xl rounded-lg"
+                                :class="card.color"
+                                @click="flipCard(card)"
+                            ></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
     </div>
 
@@ -38,7 +89,7 @@
         @flash.window="
             show = true; 
             message = $event.detail.message
-            setTimeout(() => show = false, 1000)
+            setTimeout(() => show = false, 500)
         "
         class="bg-green-500 bottom-5 fixed min-w-max px-5 py-3 right-12 rounded-2xl text-green-100"
     >
@@ -65,7 +116,11 @@
                     { color: 'bg-green-500', flipped: false, cleared: false },
                     { color: 'bg-yellow-500', flipped: false, cleared: false },
                     { color: 'bg-indigo-500', flipped: false, cleared: false },
-                ],
+                    { color: 'bg-gradient-to-br from-yellow-500 to-green-500', flipped: false, cleared: false },
+                    { color: 'bg-gradient-to-br from-yellow-500 to-green-500', flipped: false, cleared: false },
+                    { color: 'bg-gradient-to-br from-indigo-500 to-red-500', flipped: false, cleared: false },
+                    { color: 'bg-gradient-to-br from-indigo-500 to-red-500', flipped: false, cleared: false },
+                ].sort(() => Math.random() - .5),
                 isWinned: false,
 
                 get points() {
@@ -81,6 +136,10 @@
                 },
 
                 async flipCard(card) {
+                    if (this.isTwoCardsFlipped()) {
+                        return;
+                    }
+
                     card.flipped = !card.flipped
 
                     if(this.isTwoCardsFlipped()) {
@@ -91,14 +150,15 @@
                             this.flippedCards.forEach(flippedCard => flippedCard.cleared = true)
 
                             flashMessage("You found match")
-                            if (! this.remainingCards) {
-                                this.isWinned = true
-                            }
                         }
-
                         await pause()
-                            
-                        this.flippedCards.forEach(flippedCard => flippedCard.flipped = false)   
+                        
+                        this.flippedCards.forEach(flippedCard => flippedCard.flipped = false)  
+
+                        if (! this.remainingCards) {
+                            await pause()
+                            this.isWinned = true
+                        }
                     }
                 },
 
